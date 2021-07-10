@@ -68,6 +68,7 @@ extern "C" {
 
 /** media source object */
 typedef struct _aubio_source_t aubio_source_t;
+typedef struct _aubio_source_mem_t aubio_source_mem_t;
 
 /**
 
@@ -85,6 +86,7 @@ typedef struct _aubio_source_t aubio_source_t;
 
 */
 aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t hop_size);
+aubio_source_mem_t * new_aubio_source_mem( char_t * pData , const char_t nLen, uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
 
 /**
 
@@ -99,6 +101,7 @@ aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t 
 
 */
 void aubio_source_do(aubio_source_t * s, fvec_t * read_to, uint_t * read);
+void aubio_source_do_mem(aubio_source_mem_t * s, fvec_t * read_to, uint_t * read);
 
 /**
 
@@ -113,6 +116,7 @@ void aubio_source_do(aubio_source_t * s, fvec_t * read_to, uint_t * read);
 
 */
 void aubio_source_do_multi(aubio_source_t * s, fmat_t * read_to, uint_t * read);
+void aubio_source_do_multi_mem(aubio_source_mem_t * s, fmat_t * read_to, uint_t * read);
 
 /**
 
@@ -123,6 +127,7 @@ void aubio_source_do_multi(aubio_source_t * s, fmat_t * read_to, uint_t * read);
 
 */
 uint_t aubio_source_get_samplerate(aubio_source_t * s);
+uint_t aubio_source_get_samplerate_mem(aubio_source_mem_t * s);
 
 /**
 
@@ -133,6 +138,7 @@ uint_t aubio_source_get_samplerate(aubio_source_t * s);
 
 */
 uint_t aubio_source_get_channels (aubio_source_t * s);
+uint_t aubio_source_get_channels_mem (aubio_source_mem_t * s);
 
 /**
 
@@ -145,6 +151,7 @@ uint_t aubio_source_get_channels (aubio_source_t * s);
 
 */
 uint_t aubio_source_seek (aubio_source_t * s, uint_t pos);
+uint_t aubio_source_seek_mem (aubio_source_mem_t * s, uint_t pos);
 
 /**
 
@@ -155,6 +162,7 @@ uint_t aubio_source_seek (aubio_source_t * s, uint_t pos);
 
 */
 uint_t aubio_source_get_duration (aubio_source_t * s);
+uint_t aubio_source_get_duration_mem (aubio_source_mem_t * s);
 
 /**
 
@@ -166,6 +174,7 @@ uint_t aubio_source_get_duration (aubio_source_t * s);
 
  */
 uint_t aubio_source_close (aubio_source_t *s);
+uint_t aubio_source_close_mem (aubio_source_mem_t *s);
 
 /**
 
@@ -175,6 +184,7 @@ uint_t aubio_source_close (aubio_source_t *s);
 
 */
 void del_aubio_source(aubio_source_t * s);
+void del_aubio_source_mem(aubio_source_mem_t * s);
 
 #ifdef __cplusplus
 }

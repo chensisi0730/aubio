@@ -63,6 +63,10 @@ uint_t aubio_io_validate_channels(const char_t *kind, const char_t *path,
   \return hop_size or the maximum number of frames that can be written
 */
 uint_t
+aubio_source_validate_input_length_mem(const char_t *kind, 
+    uint_t hop_size, uint_t read_data_length);
+	///
+uint_t
 aubio_source_validate_input_length(const char_t *kind, const char_t *path,
     uint_t hop_size, uint_t read_data_length);
 
@@ -77,6 +81,11 @@ aubio_source_validate_input_length(const char_t *kind, const char_t *path,
 */
 uint_t
 aubio_source_validate_input_channels(const char_t *kind, const char_t *path,
+    uint_t source_channels, uint_t read_data_height);
+	
+//////	
+uint_t
+aubio_source_validate_input_channels_mem(const char_t *kind,
     uint_t source_channels, uint_t read_data_height);
 
 /** pad end of source output vector with zeroes

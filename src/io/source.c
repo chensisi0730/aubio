@@ -44,6 +44,16 @@ typedef uint_t (*aubio_source_seek_t)(aubio_source_t * s, uint_t seek);
 typedef uint_t (*aubio_source_close_t)(aubio_source_t * s);
 typedef void (*del_aubio_source_t)(aubio_source_t * s);
 
+typedef void (*aubio_source_do_mem_t)(aubio_source_mem_t * s, fvec_t * data, uint_t * read);
+typedef void (*aubio_source_do_multi_mem_t)(aubio_source_mem_t * s, fmat_t * data, uint_t * read);
+typedef uint_t (*aubio_source_get_samplerate_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_get_channels_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_get_duration_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_seek_mem_t)(aubio_source_mem_t * s, uint_t seek);
+typedef uint_t (*aubio_source_close_mem_t)(aubio_source_mem_t * s);
+typedef void (*del_aubio_source_mem_t)(aubio_source_mem_t * s);
+
+
 struct _aubio_source_t { 
   void *source;
   aubio_source_do_t s_do;
@@ -55,6 +65,50 @@ struct _aubio_source_t {
   aubio_source_close_t s_close;
   del_aubio_source_t s_del;
 };
+
+struct _aubio_source_mem_t { 
+  void *source_mem;
+  aubio_source_do_mem_t s_do_mem;
+  aubio_source_do_multi_mem_t s_do_multi_mem;
+  aubio_source_get_samplerate_mem_t s_get_samplerate_mem;
+  aubio_source_get_channels_mem_t s_get_channels_mem;
+  aubio_source_get_duration_mem_t s_get_duration_mem;
+  aubio_source_seek_mem_t s_seek_mem;
+  aubio_source_close_mem_t s_close_mem;
+  del_aubio_source_mem_t s_del_mem;
+};
+
+aubio_source_mem_t* new_aubio_source_mem( char_t* pData , const char_t  nLen, uint_t samplerate, 
+    uint_t hop_size ,  uint_t BitsPerSample)
+{
+  aubio_source_mem_t * s = AUBIO_NEW(aubio_source_mem_t);
+
+#ifdef HAVE_WAVREAD
+  s->source_mem = (void *)new_aubio_source_wavread_mem( pData , nLen , samplerate, hop_size ,  BitsPerSample);
+  if (s->source_mem) {
+    s->s_do_mem = (aubio_source_do_mem_t)(aubio_source_wavread_do_mem);
+    s->s_do_multi_mem = (aubio_source_do_multi_mem_t)(aubio_source_wavread_do_multi_mem);
+    s->s_get_channels_mem = (aubio_source_get_channels_mem_t)(aubio_source_wavread_get_channels_mem);
+    s->s_get_samplerate_mem = (aubio_source_get_samplerate_mem_t)(aubio_source_wavread_get_samplerate_mem);
+    s->s_get_duration_mem = (aubio_source_get_duration_mem_t)(aubio_source_wavread_get_duration_mem);
+    s->s_seek_mem = (aubio_source_seek_mem_t)(aubio_source_wavread_seek_mem);
+    s->s_close_mem = (aubio_source_close_mem_t)(aubio_source_wavread_close_mem);
+    s->s_del_mem = (del_aubio_source_mem_t)(del_aubio_source_wavread_mem);
+    return s;
+  }
+  
+#endif /* HAVE_WAVREAD */
+#if !defined(HAVE_WAVREAD) && \
+  !defined(HAVE_LIBAV) && \
+  !defined(HAVE_SOURCE_APPLE_AUDIO) && \
+  !defined(HAVE_SNDFILE)
+  AUBIO_ERROR("source: failed creating with  at %dHz with hop size %d"
+     " (no source built-in)\n",  samplerate, hop_size);
+#endif
+  //del_aubio_source_mem(s);//chensisi ¼ÓÉÏ±¨´í
+  return NULL;
+}
+
 
 aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t hop_size) {
   aubio_source_t * s = AUBIO_NEW(aubio_source_t);
@@ -159,3 +213,42 @@ uint_t aubio_source_get_duration(aubio_source_t *s) {
 uint_t aubio_source_seek (aubio_source_t * s, uint_t seek ) {
   return s->s_seek((void *)s->source, seek);
 }
+
+
+//#####################add 
+void aubio_source_do_mem(aubio_source_mem_t * s, fvec_t * data, uint_t * read) {
+  s->s_do_mem((void *)s->source_mem , data , read );
+}
+
+void aubio_source_do_multi_mem(aubio_source_mem_t * s, fmat_t * data, uint_t * read) {
+  s->s_do_multi_mem((void *)s->source_mem, data, read);
+}
+
+
+uint_t aubio_source_close_mem(aubio_source_mem_t * s) {
+  return s->s_close_mem((void *)s->source_mem);
+}
+
+void del_aubio_source_mem(aubio_source_mem_t * s) {
+  AUBIO_ASSERT(s);
+  if (s && s->s_del_mem && s->source_mem)
+    s->s_del_mem((void *)s->source_mem);
+  AUBIO_FREE(s);
+}
+
+uint_t aubio_source_get_samplerate_mem(aubio_source_mem_t * s) {
+  return s->s_get_samplerate_mem((void *)s->source_mem);
+}
+
+uint_t aubio_source_get_channels_mem(aubio_source_mem_t * s) {
+  return s->s_get_channels_mem((void *)s->source_mem);
+}
+
+uint_t aubio_source_get_duration_mem(aubio_source_mem_t *s) {
+  return s->s_get_duration_mem((void *)s->source_mem);
+}
+
+uint_t aubio_source_seek_mem (aubio_source_mem_t * s, uint_t seek ) {
+  return s->s_seek_mem((void *)s->source_mem, seek);
+}
+

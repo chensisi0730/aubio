@@ -45,6 +45,7 @@ extern "C" {
 
 /** wavread media source object */
 typedef struct _aubio_source_wavread_t aubio_source_wavread_t;
+typedef struct _aubio_source_wavread_mem_t aubio_source_wavread_mem_t;
 
 /**
 
@@ -62,6 +63,8 @@ typedef struct _aubio_source_wavread_t aubio_source_wavread_t;
 
 */
 aubio_source_wavread_t * new_aubio_source_wavread(const char_t * uri, uint_t samplerate, uint_t hop_size);
+aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const char_t nLen, 
+        uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
 
 /**
 
@@ -76,6 +79,7 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * uri, uint_t sam
 
 */
 void aubio_source_wavread_do(aubio_source_wavread_t * s, fvec_t * read_to, uint_t * read);
+void aubio_source_wavread_do_mem(aubio_source_wavread_mem_t * s, fvec_t * read_to, uint_t * read);
 
 /**
 
@@ -90,6 +94,7 @@ void aubio_source_wavread_do(aubio_source_wavread_t * s, fvec_t * read_to, uint_
 
 */
 void aubio_source_wavread_do_multi(aubio_source_wavread_t * s, fmat_t * read_to, uint_t * read);
+void aubio_source_wavread_do_multi_mem(aubio_source_wavread_mem_t * s, fmat_t * read_to, uint_t * read);
 
 /**
 
@@ -100,6 +105,7 @@ void aubio_source_wavread_do_multi(aubio_source_wavread_t * s, fmat_t * read_to,
 
 */
 uint_t aubio_source_wavread_get_samplerate(aubio_source_wavread_t * s);
+uint_t aubio_source_wavread_get_samplerate_mem(aubio_source_wavread_mem_t * s);
 
 /**
 
@@ -110,6 +116,7 @@ uint_t aubio_source_wavread_get_samplerate(aubio_source_wavread_t * s);
 
 */
 uint_t aubio_source_wavread_get_channels (aubio_source_wavread_t * s);
+uint_t aubio_source_wavread_get_channels_mem (aubio_source_wavread_mem_t * s);
 
 /**
 
@@ -122,6 +129,7 @@ uint_t aubio_source_wavread_get_channels (aubio_source_wavread_t * s);
 
 */
 uint_t aubio_source_wavread_seek (aubio_source_wavread_t *s, uint_t pos);
+uint_t aubio_source_wavread_seek_mem (aubio_source_wavread_mem_t *s, uint_t pos);
 
 /**
 
@@ -132,6 +140,7 @@ uint_t aubio_source_wavread_seek (aubio_source_wavread_t *s, uint_t pos);
 
 */
 uint_t aubio_source_wavread_get_duration (const aubio_source_wavread_t *s);
+uint_t aubio_source_wavread_get_duration_mem (const aubio_source_wavread_mem_t *s);
 
 /**
 
@@ -143,6 +152,7 @@ uint_t aubio_source_wavread_get_duration (const aubio_source_wavread_t *s);
 
 */
 uint_t aubio_source_wavread_close (aubio_source_wavread_t *s);
+uint_t aubio_source_wavread_close_mem (aubio_source_wavread_mem_t *s);
 
 /**
 
@@ -152,6 +162,7 @@ uint_t aubio_source_wavread_close (aubio_source_wavread_t *s);
 
 */
 void del_aubio_source_wavread(aubio_source_wavread_t * s);
+void del_aubio_source_wavread_mem(aubio_source_wavread_mem_t * s);
 
 #ifdef __cplusplus
 }

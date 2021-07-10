@@ -69,6 +69,23 @@ aubio_source_validate_input_length(const char_t *kind, const char_t *path,
   return length;
 }
 
+uint_t aubio_source_validate_input_length_mem(const char_t *kind,
+    uint_t hop_size, uint_t read_data_length)
+{
+  uint_t length = hop_size;
+  if (hop_size < read_data_length) {
+    AUBIO_ERR("%s: partial read from %s, trying to read %d frames, but"
+        " hop_size is %d\n", kind, read_data_length, hop_size);
+  } else if (hop_size > read_data_length) {
+    AUBIO_ERR("%s: partial read from %s, trying to read %d frames into"
+        " a buffer of length %d\n", kind, hop_size, read_data_length);
+    length = read_data_length;
+  }
+
+  return length;
+}
+
+
 uint_t
 aubio_source_validate_input_channels(const char_t *kind, const char_t *path,
     uint_t source_channels, uint_t read_data_height)
@@ -91,6 +108,29 @@ aubio_source_validate_input_channels(const char_t *kind, const char_t *path,
   }
   return channels;
 }
+uint_t
+aubio_source_validate_input_channels_mem(const char_t *kind,
+    uint_t source_channels, uint_t read_data_height)
+{
+  uint_t channels = source_channels;
+  if (read_data_height < source_channels) {
+    AUBIO_WRN("%s: partial read from , trying to read %d channels,"
+        " but found output of height %d\n", kind, source_channels,
+        read_data_height);
+    channels = read_data_height;
+  } else if (read_data_height > source_channels) {
+    // do not show a warning when trying to read into more channels than
+    // the input source.
+#if 0
+    AUBIO_WRN("%s: partial read from %s, trying to read %d channels,"
+        " but found output of height %d\n", kind, path, source_channels,
+        read_data_height);
+#endif
+    channels = source_channels;
+  }
+  return channels;
+}
+
 
 void
 aubio_source_pad_output (fvec_t *read_data, uint_t source_read)
