@@ -53,12 +53,17 @@ struct _aubio_tempo_t {
   uint_t tatum_signature;        /** number of tatum between each beats */
 };
 
+
+//防止GDB时，被优化
+#pragma GCC push_options
+#pragma GCC optimize (0)
+
 /* execute tempo detection function on iput buffer */
 void aubio_tempo_do(aubio_tempo_t *o, const fvec_t * input, fvec_t * tempo)
 {
   uint_t i;
-  uint_t winlen = o->winlen;
-  uint_t step   = o->step;
+  volatile uint_t winlen = o->winlen; // 8192 
+  volatile uint_t step   = o->step; // 2048  //防止GDB时，被优化
   fvec_t * thresholded;
   aubio_pvoc_do (o->pv, input, o->fftgrain);
   aubio_specdesc_do (o->od, o->fftgrain, o->of);
@@ -101,6 +106,7 @@ void aubio_tempo_do(aubio_tempo_t *o, const fvec_t * input, fvec_t * tempo)
   o->total_frames += o->hop_size;
   return;
 }
+#pragma GCC pop_options //防止GDB时，被优化
 
 uint_t aubio_tempo_get_last (aubio_tempo_t *o)
 {
