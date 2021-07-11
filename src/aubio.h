@@ -195,6 +195,8 @@ extern "C"
 #include "tempo/tempo.h"
 #include "notes/notes.h"
 #include "io/source.h"
+#include "io/source_wavread.h"
+
 #include "io/sink.h"
 #include "synth/sampler.h"
 #include "synth/wavetable.h"
@@ -202,6 +204,7 @@ extern "C"
 #include "utils/log.h"
 
 #if AUBIO_UNSTABLE
+
 #include "mathutils.h"
 #include "io/source_sndfile.h"
 #include "io/source_apple_audio.h"

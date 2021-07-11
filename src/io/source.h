@@ -70,6 +70,31 @@ extern "C" {
 typedef struct _aubio_source_t aubio_source_t;
 typedef struct _aubio_source_mem_t aubio_source_mem_t;
 
+typedef void (*aubio_source_do_t)(aubio_source_t * s, fvec_t * data, uint_t * read);
+typedef void (*aubio_source_do_multi_t)(aubio_source_t * s, fmat_t * data, uint_t * read);
+typedef uint_t (*aubio_source_get_samplerate_t)(aubio_source_t * s);
+typedef uint_t (*aubio_source_get_channels_t)(aubio_source_t * s);
+typedef uint_t (*aubio_source_get_duration_t)(aubio_source_t * s);
+typedef uint_t (*aubio_source_seek_t)(aubio_source_t * s, uint_t seek);
+typedef uint_t (*aubio_source_close_t)(aubio_source_t * s);
+typedef void (*del_aubio_source_t)(aubio_source_t * s);
+
+struct _aubio_source_t { 
+  void *source;
+  aubio_source_do_t s_do;
+  aubio_source_do_multi_t s_do_multi;
+  aubio_source_get_samplerate_t s_get_samplerate;
+  aubio_source_get_channels_t s_get_channels;
+  aubio_source_get_duration_t s_get_duration;
+  aubio_source_seek_t s_seek;
+  aubio_source_close_t s_close;
+  del_aubio_source_t s_del;
+};
+
+
+
+
+
 /**
 
   create new ::aubio_source_t

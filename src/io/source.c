@@ -35,14 +35,7 @@
 #include "io/source_wavread.h"
 #endif /* HAVE_WAVREAD */
 
-typedef void (*aubio_source_do_t)(aubio_source_t * s, fvec_t * data, uint_t * read);
-typedef void (*aubio_source_do_multi_t)(aubio_source_t * s, fmat_t * data, uint_t * read);
-typedef uint_t (*aubio_source_get_samplerate_t)(aubio_source_t * s);
-typedef uint_t (*aubio_source_get_channels_t)(aubio_source_t * s);
-typedef uint_t (*aubio_source_get_duration_t)(aubio_source_t * s);
-typedef uint_t (*aubio_source_seek_t)(aubio_source_t * s, uint_t seek);
-typedef uint_t (*aubio_source_close_t)(aubio_source_t * s);
-typedef void (*del_aubio_source_t)(aubio_source_t * s);
+
 
 typedef void (*aubio_source_do_mem_t)(aubio_source_mem_t * s, fvec_t * data, uint_t * read);
 typedef void (*aubio_source_do_multi_mem_t)(aubio_source_mem_t * s, fmat_t * data, uint_t * read);
@@ -54,17 +47,7 @@ typedef uint_t (*aubio_source_close_mem_t)(aubio_source_mem_t * s);
 typedef void (*del_aubio_source_mem_t)(aubio_source_mem_t * s);
 
 
-struct _aubio_source_t { 
-  void *source;
-  aubio_source_do_t s_do;
-  aubio_source_do_multi_t s_do_multi;
-  aubio_source_get_samplerate_t s_get_samplerate;
-  aubio_source_get_channels_t s_get_channels;
-  aubio_source_get_duration_t s_get_duration;
-  aubio_source_seek_t s_seek;
-  aubio_source_close_t s_close;
-  del_aubio_source_t s_del;
-};
+
 
 struct _aubio_source_mem_t { 
   void *source_mem;
@@ -112,48 +95,7 @@ aubio_source_mem_t* new_aubio_source_mem( char_t* pData , const char_t  nLen, ui
 
 aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t hop_size) {
   aubio_source_t * s = AUBIO_NEW(aubio_source_t);
-#ifdef HAVE_LIBAV
-  s->source = (void *)new_aubio_source_avcodec(uri, samplerate, hop_size);
-  if (s->source) {
-    s->s_do = (aubio_source_do_t)(aubio_source_avcodec_do);
-    s->s_do_multi = (aubio_source_do_multi_t)(aubio_source_avcodec_do_multi);
-    s->s_get_channels = (aubio_source_get_channels_t)(aubio_source_avcodec_get_channels);
-    s->s_get_samplerate = (aubio_source_get_samplerate_t)(aubio_source_avcodec_get_samplerate);
-    s->s_get_duration = (aubio_source_get_duration_t)(aubio_source_avcodec_get_duration);
-    s->s_seek = (aubio_source_seek_t)(aubio_source_avcodec_seek);
-    s->s_close = (aubio_source_close_t)(aubio_source_avcodec_close);
-    s->s_del = (del_aubio_source_t)(del_aubio_source_avcodec);
-    return s;
-  }
-#endif /* HAVE_LIBAV */
-#ifdef HAVE_SOURCE_APPLE_AUDIO
-  s->source = (void *)new_aubio_source_apple_audio(uri, samplerate, hop_size);
-  if (s->source) {
-    s->s_do = (aubio_source_do_t)(aubio_source_apple_audio_do);
-    s->s_do_multi = (aubio_source_do_multi_t)(aubio_source_apple_audio_do_multi);
-    s->s_get_channels = (aubio_source_get_channels_t)(aubio_source_apple_audio_get_channels);
-    s->s_get_samplerate = (aubio_source_get_samplerate_t)(aubio_source_apple_audio_get_samplerate);
-    s->s_get_duration = (aubio_source_get_duration_t)(aubio_source_apple_audio_get_duration);
-    s->s_seek = (aubio_source_seek_t)(aubio_source_apple_audio_seek);
-    s->s_close = (aubio_source_close_t)(aubio_source_apple_audio_close);
-    s->s_del = (del_aubio_source_t)(del_aubio_source_apple_audio);
-    return s;
-  }
-#endif /* HAVE_SOURCE_APPLE_AUDIO */
-#ifdef HAVE_SNDFILE
-  s->source = (void *)new_aubio_source_sndfile(uri, samplerate, hop_size);
-  if (s->source) {
-    s->s_do = (aubio_source_do_t)(aubio_source_sndfile_do);
-    s->s_do_multi = (aubio_source_do_multi_t)(aubio_source_sndfile_do_multi);
-    s->s_get_channels = (aubio_source_get_channels_t)(aubio_source_sndfile_get_channels);
-    s->s_get_samplerate = (aubio_source_get_samplerate_t)(aubio_source_sndfile_get_samplerate);
-    s->s_get_duration = (aubio_source_get_duration_t)(aubio_source_sndfile_get_duration);
-    s->s_seek = (aubio_source_seek_t)(aubio_source_sndfile_seek);
-    s->s_close = (aubio_source_close_t)(aubio_source_sndfile_close);
-    s->s_del = (del_aubio_source_t)(del_aubio_source_sndfile);
-    return s;
-  }
-#endif /* HAVE_SNDFILE */
+
 #ifdef HAVE_WAVREAD
   s->source = (void *)new_aubio_source_wavread(uri, samplerate, hop_size);
   if (s->source) {
