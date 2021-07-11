@@ -35,7 +35,7 @@
 #define AUBIO_WAVREAD_BUFSIZE 1024
 
 //#define SHORT_TO_FLOAT(x) (smpl_t)(x * 3.0517578125e-05)
-
+/*
 struct _aubio_source_wavread_t {
   uint_t hop_size;
   uint_t samplerate;
@@ -48,6 +48,8 @@ struct _aubio_source_wavread_t {
 
   // internal stuff
   FILE *fid;
+  uint_t data_size ;
+  uint_t *data_add;
 
   uint_t read_samples;
   uint_t blockalign;
@@ -62,7 +64,7 @@ struct _aubio_source_wavread_t {
   unsigned char *short_output;
   fmat_t *output;
 };
-
+*/
 struct _aubio_source_wavread_mem_t {
   uint_t hop_size;
   uint_t samplerate;
@@ -121,7 +123,7 @@ aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const
     AUBIO_ERR("source_wavread: Can not open  with hop_size %d\n", hop_size);
     goto beach;
   }
-  channels = 1;
+  channels = 2;
   bitspersample = 16;
   s->samplerate = samplerate;
   s->hop_size = hop_size;
@@ -371,6 +373,10 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
   AUBIO_MSG("found %d frames in %s\n", 8 * data_size / bitspersample / channels, s->path);
   AUBIO_MSG("duration %d\n", duration);// duration ==frames
 #endif 
+  s->data_size = data_size ;
+  s->data_addr = AUBIO_MALLOC(data_size);
+  s->data_addr = fread(s->data_addr, 1, data_size, s->fid) ;//把数据和大小都读出来
+  fseek(s->fid , -data_size, 1 );//SEEK_CUR 文件指针还需要移动到原来的位置
 
   // check the total number of bytes read is correct
   if ( bytes_read != bytes_expected ) {
@@ -385,7 +391,7 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
   }
   s->seek_start = bytes_read;
 
-  s->output = new_fmat(s->input_channels , AUBIO_WAVREAD_BUFSIZE);//  ???? chensisi
+  s->output = new_fmat(s->input_channels , AUBIO_WAVREAD_BUFSIZE);//  ???? chensisi  2* 1024
   s->blockalign= blockalign;
   s->bitspersample = bitspersample;
 
@@ -587,7 +593,11 @@ void aubio_source_wavread_readframe_mem(aubio_source_wavread_mem_t *s, uint_t *w
   //AUBIO_ERR("file: %s , func :%s , line:%d , s->pData = %x ,short_ptr = %x ,len = %d \n",__FILE__ , __func__ , __LINE__ , 
   //                                          s->pData ,      short_ptr , s->blockalign *AUBIO_WAVREAD_BUFSIZE);
   //size_t read = fread(short_ptr, s->blockalign, AUBIO_WAVREAD_BUFSIZE, s->fid);//del
-  memcpy(short_ptr ,s->pData , s->blockalign *AUBIO_WAVREAD_BUFSIZE);
+  if(s->nLen >= s->blockalign *AUBIO_WAVREAD_BUFSIZE){
+      memcpy(short_ptr ,s->pData , s->blockalign *AUBIO_WAVREAD_BUFSIZE);
+      s->pData = s->pData + s->blockalign *AUBIO_WAVREAD_BUFSIZE;
+      s->nLen = s->nLen - s->blockalign *AUBIO_WAVREAD_BUFSIZE;
+  }
   
   //AUBIO_ERR("file: %s , func :%s , line:%d\n",__FILE__ , __func__ , __LINE__);
   read = s->blockalign *AUBIO_WAVREAD_BUFSIZE ;

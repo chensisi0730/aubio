@@ -15,8 +15,20 @@
 
   You should have received a copy of the GNU General Public License
   along with aubio.  If not, see <http://www.gnu.org/licenses/>.
+#include "aubio_priv.h"
+
+#include <string.h>
+    
+#include "fvec.h"
+#include "fmat.h"
+#include "ioutils.h"
 
 */
+
+#include <stdio.h>
+
+
+
 
 #ifndef AUBIO_SOURCE_WAVREAD_H
 #define AUBIO_SOURCE_WAVREAD_H
@@ -42,6 +54,34 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+struct _aubio_source_wavread_t {
+  uint_t hop_size;
+  uint_t samplerate;
+  uint_t channels;
+
+  // some data about the file
+  char_t *path;
+  uint_t input_samplerate;
+  uint_t input_channels;
+
+  // internal stuff
+  FILE *fid;
+  uint_t data_size ;
+  uint_t *data_addr;
+
+  uint_t read_samples;
+  uint_t blockalign;
+  uint_t bitspersample;
+  uint_t read_index;
+  uint_t eof;
+
+  uint_t duration;
+
+  size_t seek_start;
+
+  unsigned char *short_output;
+  fmat_t *output;
+};
 
 /** wavread media source object */
 typedef struct _aubio_source_wavread_t aubio_source_wavread_t;
