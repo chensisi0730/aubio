@@ -37,34 +37,13 @@
 
 
 
-typedef void (*aubio_source_do_mem_t)(aubio_source_mem_t * s, fvec_t * data, uint_t * read);
-typedef void (*aubio_source_do_multi_mem_t)(aubio_source_mem_t * s, fmat_t * data, uint_t * read);
-typedef uint_t (*aubio_source_get_samplerate_mem_t)(aubio_source_mem_t * s);
-typedef uint_t (*aubio_source_get_channels_mem_t)(aubio_source_mem_t * s);
-typedef uint_t (*aubio_source_get_duration_mem_t)(aubio_source_mem_t * s);
-typedef uint_t (*aubio_source_seek_mem_t)(aubio_source_mem_t * s, uint_t seek);
-typedef uint_t (*aubio_source_close_mem_t)(aubio_source_mem_t * s);
-typedef void (*del_aubio_source_mem_t)(aubio_source_mem_t * s);
 
 
-
-
-struct _aubio_source_mem_t { 
-  void *source_mem;
-  aubio_source_do_mem_t s_do_mem;
-  aubio_source_do_multi_mem_t s_do_multi_mem;
-  aubio_source_get_samplerate_mem_t s_get_samplerate_mem;
-  aubio_source_get_channels_mem_t s_get_channels_mem;
-  aubio_source_get_duration_mem_t s_get_duration_mem;
-  aubio_source_seek_mem_t s_seek_mem;
-  aubio_source_close_mem_t s_close_mem;
-  del_aubio_source_mem_t s_del_mem;
-};
-
-aubio_source_mem_t* new_aubio_source_mem( char_t* pData , const char_t  nLen, uint_t samplerate, 
+aubio_source_mem_t* new_aubio_source_mem(unsigned char  * pData ,  uint_t  nLen, uint_t samplerate, 
     uint_t hop_size ,  uint_t BitsPerSample)
 {
   aubio_source_mem_t * s = AUBIO_NEW(aubio_source_mem_t);
+  AUBIO_ERROR("file: %s , func :%s , line:%d ,pData = %x ,nLen=%d\n",__FILE__ , __func__ , __LINE__ ,pData, nLen);//9922500 frames, p->data_size=39690000,4倍的关系才是对的
 
 #ifdef HAVE_WAVREAD
   s->source_mem = (void *)new_aubio_source_wavread_mem( pData , nLen , samplerate, hop_size ,  BitsPerSample);
@@ -88,7 +67,7 @@ aubio_source_mem_t* new_aubio_source_mem( char_t* pData , const char_t  nLen, ui
   AUBIO_ERROR("source: failed creating with  at %dHz with hop size %d"
      " (no source built-in)\n",  samplerate, hop_size);
 #endif
-  //del_aubio_source_mem(s);//chensisi 加上报错
+  del_aubio_source_mem(s);//chensisi WIN10加上报错
   return NULL;
 }
 

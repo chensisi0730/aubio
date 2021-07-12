@@ -79,7 +79,7 @@ aubio_pvoc_t * new_aubio_pvoc (uint_t win_s, uint_t hop_s) {
 
   /* if (win_s < 2*hop_s) {
     AUBIO_WRN("Hop size bigger than half the window size!\n");
-  } */
+  } */ //TODO:chensisi 需要验证
 
   if ((sint_t)hop_s < 1) {
     AUBIO_ERR("pvoc: got hop_size %d, but can not be < 1\n", hop_s);
@@ -122,8 +122,8 @@ aubio_pvoc_t * new_aubio_pvoc (uint_t win_s, uint_t hop_s) {
   if (win_s > hop_s) pv->end = win_s - hop_s;
   else pv->end = 0;
 
-  pv->end_datasize = pv->end * sizeof(smpl_t);
-  pv->hop_datasize = pv->hop_s * sizeof(smpl_t);
+  pv->end_datasize = pv->end * sizeof(smpl_t);//3968
+  pv->hop_datasize = pv->hop_s * sizeof(smpl_t);//128
 
   // for reconstruction with 75% overlap
   if (win_s == hop_s * 4) {
@@ -132,7 +132,7 @@ aubio_pvoc_t * new_aubio_pvoc (uint_t win_s, uint_t hop_s) {
     pv->scale = 1./3.;
   } else if (win_s == hop_s * 2) {
     pv->scale = 1.;
-  } else {
+  } else {//  我们时32倍，走这里
     pv->scale = .5;
   }
 

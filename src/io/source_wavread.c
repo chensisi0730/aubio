@@ -65,33 +65,7 @@ struct _aubio_source_wavread_t {
   fmat_t *output;
 };
 */
-struct _aubio_source_wavread_mem_t {
-  uint_t hop_size;
-  uint_t samplerate;
-  uint_t channels;
 
-  // some data about the file
-  char_t *pData;
-  char_t  nLen;
-  uint_t input_samplerate;
-  uint_t input_channels;
-
-  // internal stuff
-  
-
-  uint_t read_samples;
-  uint_t blockalign;
-  uint_t bitspersample;
-  uint_t read_index;
-  uint_t eof;
-
-  uint_t duration;
-
-  size_t seek_start;
-
-  unsigned char *short_output;//??
-  fmat_t *output;//???
-};
 
 
 static unsigned int read_little_endian (unsigned char *buf,
@@ -108,7 +82,7 @@ static unsigned int read_little_endian (unsigned char *buf,
 }
 
 
-aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const char_t nLen, 
+aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( unsigned char* pData ,  uint_t   nLen, 
     uint_t samplerate, uint_t hop_size , uint_t BitsPerSample ) {
   aubio_source_wavread_mem_t * s = AUBIO_NEW(aubio_source_wavread_mem_t);
   size_t bytes_read = 0, bytes_junk = 0, bytes_expected = 44;
@@ -123,25 +97,26 @@ aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const
     AUBIO_ERR("source_wavread: Can not open  with hop_size %d\n", hop_size);
     goto beach;
   }
+  
+  #if 1
+  if ( BitsPerSample != 16 ) {
+    AUBIO_ERR("source_wavread: can not process %dbit \n",
+        bitspersample);
+  }
+  #endif
+
   channels = 2;
   bitspersample = 16;
   s->samplerate = samplerate;
   s->hop_size = hop_size;
   s->input_samplerate = samplerate;
   s->input_channels = channels;
-  s->pData= pData;
-   s->nLen= nLen;  
-#if MY_DEBUG
-  AUBIO_DBG("channels %d\n", channels);
-  AUBIO_DBG("sr %d\n", sr);
-  AUBIO_DBG("byterate %d\n", byterate);
-  AUBIO_DBG("blockalign %d\n", blockalign);
-  AUBIO_DBG("bitspersample %d\n", bitspersample);
-  AUBIO_ERR("pData 0x%x\n", pData);
-#endif
+  s->pData= pData;//保存在此
+  s->nLen= nLen;
+
 
   blockalign = (channels * bitspersample)/8 ;
-  
+  s->seek_start = 0;
   s->output = new_fmat(s->input_channels , AUBIO_WAVREAD_BUFSIZE);//  ????
   s->blockalign= blockalign;
   s->bitspersample = BitsPerSample;
@@ -150,13 +125,23 @@ aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const
   s->read_index = 0;
   s->read_samples = 0;
   s->eof = 0;
-
+#if MY_DEBUG
+    AUBIO_ERR("channels %d\n", channels);
+    AUBIO_ERR("sr %d\n", s->samplerate);
+    //AUBIO_ERR("byterate %d\n", byterate);
+    AUBIO_ERR("blockalign %d\n", blockalign);
+    AUBIO_ERR("bitspersample %d\n", bitspersample);
+    AUBIO_ERR("s->pData 0x%x\n", s->pData);
+    AUBIO_ERR("s->nLen %d\n", s->nLen);
+    AUBIO_ERR("s->short_output 0x%x\n", s->short_output);
+    AUBIO_ERR("s->output 0x%x\n", s->output);
+    
+#endif
   return s;
-
 beach:
   AUBIO_ERR("source_wavread: can not read  at samplerate %dHz with a hop_size of %d\n"
       , s->samplerate, s->hop_size);
-  del_aubio_source_wavread(s);
+  del_aubio_source_wavread_mem(s);
   return NULL;
 }
 
@@ -279,7 +264,7 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
   bytes_read += fread(buf, 1, 2, s->fid);
   bitspersample = read_little_endian(buf, 2);
   
-  AUBIO_INF("############source_wavread:    channels = %d  sr = %d byterate=%d  blockalign=%d bitspersample=%d   \n", channels ,sr ,byterate ,blockalign ,bitspersample);
+  AUBIO_INF("source_wavread:    channels = %d  sr = %d byterate=%d  blockalign=%d bitspersample=%d   \n", channels ,sr ,byterate ,blockalign ,bitspersample);
 //channels = 2  sr = 44100 byterate=176400  blockalign=4 bitspersample=16
 
   if ( channels == 0 ) {
@@ -368,16 +353,17 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
   duration = read_little_endian(buf, 4) / blockalign;
 
 #if MY_DEBUG
-  int data_size =0 ;
-  data_size = buf[0] + (buf[1] << 8) + (buf[2] << 16) + (buf[3] << 24);//实际数据大小
-  AUBIO_MSG("found %d frames in %s\n", 8 * data_size / bitspersample / channels, s->path);
+  int data_size =0 ,tem_len=0;
+  data_size = buf[0] + (buf[1] << 8) + (buf[2] << 16) + (buf[3] << 24);//实际数据大小,BYTE
+  AUBIO_MSG("found %d frames in %s\n", 8 * data_size / bitspersample / channels, s->path);//also =data_size/blockalign
   AUBIO_MSG("duration %d\n", duration);// duration ==frames
 #endif 
   s->data_size = data_size ;
-  s->data_addr = AUBIO_MALLOC(data_size);
-  s->data_addr = fread(s->data_addr, 1, data_size, s->fid) ;//把数据和大小都读出来
-  fseek(s->fid , -data_size, 1 );//SEEK_CUR 文件指针还需要移动到原来的位置
-
+  s->data_addr = (unsigned char*)AUBIO_MALLOC(data_size);
+  tem_len = fread(s->data_addr, 1, data_size, s->fid) ;//把数据和大小都读出来
+  fseek(s->fid , -data_size, SEEK_CUR );//SEEK_CUR:1 文件指针还需要移动到原来的位置
+  
+  //fopen();//save as pcm file chensisi TODO:
   // check the total number of bytes read is correct
   if ( bytes_read != bytes_expected ) {
 #ifndef HAVE_WIN_HACKS
@@ -388,7 +374,7 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
         (int)bytes_read, (int)bytes_expected, s->path);
 #endif
     goto beach;
-  }
+  } 
   s->seek_start = bytes_read;
 
   s->output = new_fmat(s->input_channels , AUBIO_WAVREAD_BUFSIZE);//  ???? chensisi  2* 1024
@@ -397,10 +383,11 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
 
   s->duration = duration;
 
-  s->short_output = (unsigned char *)calloc(s->blockalign, AUBIO_WAVREAD_BUFSIZE);// 4 * 1024 
+  s->short_output = (unsigned char *)calloc(s->blockalign, AUBIO_WAVREAD_BUFSIZE);// 4 * 1024  TODO: CHENSISI __attribute__((align(4)))
   s->read_index = 0;
   s->read_samples = 0;
   s->eof = 0;
+  //AUBIO_ERR("s->short_output 's len =  %d\n", s->blockalign* AUBIO_WAVREAD_BUFSIZE);// duration ==frames
 
   return s;
 
@@ -409,6 +396,70 @@ beach:
   //    s->path, s->samplerate, s->hop_size);
   del_aubio_source_wavread(s);
   return NULL;
+}
+
+void aubio_source_wavread_readframe_mem(aubio_source_wavread_mem_t *s, uint_t *wavread_read);
+
+
+void aubio_source_wavread_readframe_mem(aubio_source_wavread_mem_t *s, uint_t *wavread_read) {
+  unsigned char *short_ptr = s->short_output; 
+  unsigned char * dest;
+  size_t  read ;
+  //AUBIO_ERR("file: %s , func :%s , line:%d ,s->short_output =0x%x, s->pData=0x%x  ,s->nLen:%d ,s->pData= 0x%x \n",__FILE__ , __func__ , __LINE__,
+  //                                          s->short_output,        s->pData ,      s->nLen , *(s->pData));
+
+  //size_t read = fread(short_ptr, s->blockalign, AUBIO_WAVREAD_BUFSIZE, s->fid);//del  file interface
+  if(s->nLen >= s->blockalign *AUBIO_WAVREAD_BUFSIZE){
+      //AUBIO_ERR("file: %s , func :%s , line:%d ,s->short_output =0x%x, s->pData=0x%x  ,s->nLen:%d  ,copy-len=%d\n",__FILE__ , __func__ , __LINE__,
+      //                                           s->short_output,        s->pData ,      s->nLen  ,s->blockalign *AUBIO_WAVREAD_BUFSIZE);
+      dest = AUBIO_MEMCPY(short_ptr ,s->pData ,  s->blockalign *AUBIO_WAVREAD_BUFSIZE);
+      s->pData = s->pData + s->blockalign *AUBIO_WAVREAD_BUFSIZE;
+      s->nLen = s->nLen - s->blockalign *AUBIO_WAVREAD_BUFSIZE;
+      //  AUBIO_ERR("file: %s , func :%s , line:%d ,s->short_output =0x%x, s->pData=0x%x  ,s->nLen:%d\n",__FILE__ , __func__ , __LINE__,
+      //                                      s->short_output,        s->pData ,      s->nLen);
+      read = AUBIO_WAVREAD_BUFSIZE ; //read 的不是SIZE ，是块数量
+  }
+  else{
+
+    read = 0;
+  }
+  
+  //AUBIO_ERR("file: %s , func :%s , line:%d  s->nLen:%d\n",__FILE__ , __func__ , __LINE__,s->nLen);
+
+  
+  uint_t i, j, b, bitspersample = s->bitspersample;
+  uint_t wrap_at = (1 << ( bitspersample - 1 ) );
+  uint_t wrap_with = (1 << bitspersample);
+  smpl_t scaler = 1. / wrap_at;
+  int signed_val = 0;
+  unsigned int unsigned_val = 0;
+
+  for (j = 0; j < read; j++) {
+    for (i = 0; i < s->input_channels; i++) {
+      unsigned_val = 0;
+      for (b = 0; b < bitspersample; b+=8 ) {
+        unsigned_val += *(short_ptr) << b;
+        short_ptr++;
+      }
+      signed_val = unsigned_val;
+      // FIXME why does 8 bit conversion maps [0;255] to [-128;127]
+      // instead of [0;127] to [0;127] and [128;255] to [-128;-1]
+      if (bitspersample == 8) signed_val -= wrap_at;
+      else if (unsigned_val >= wrap_at) signed_val = unsigned_val - wrap_with;
+      s->output->data[i][j] = signed_val * scaler;
+      //AUBIO_ERR("aubio_source_wavread_readframe:%d ,%d ,0x%0.5f\n",        i,j ,signed_val * scaler);//都是0
+    }
+  }
+
+  *wavread_read = read;//read = 4096
+  //AUBIO_ERR("source_wavread: can not read  at samplerate %d with a hop_size of %d\n", s->blockalign, read ); // 4 1024
+  //AUBIO_ERR("file: %s , func :%s , line:%d  read:%d\n",__FILE__ , __func__ , __LINE__,read);
+
+  //if (read == 0) s->eof = 1;//如果读完，设置结束标志位
+  if (read < AUBIO_WAVREAD_BUFSIZE) {
+    s->eof = 1;
+    
+    }
 }
 
 void aubio_source_wavread_readframe(aubio_source_wavread_t *s, uint_t *wavread_read);
@@ -436,10 +487,12 @@ void aubio_source_wavread_readframe(aubio_source_wavread_t *s, uint_t *wavread_r
       if (bitspersample == 8) signed_val -= wrap_at;
       else if (unsigned_val >= wrap_at) signed_val = unsigned_val - wrap_with;
       s->output->data[i][j] = signed_val * scaler;
+      //AUBIO_ERR("aubio_source_wavread_readframe:%d ,%d ,0x%0.5f\n",        i,j ,signed_val * scaler);//都是0
     }
   }
 
   *wavread_read = read;
+  //AUBIO_ERR("source_wavread: can not read  at samplerate %d with a hop_size of %d\n", s->blockalign, read ); // 4 1024
 
   if (read == 0) s->eof = 1;
 }
@@ -583,58 +636,14 @@ void del_aubio_source_wavread(aubio_source_wavread_t * s) {
 
 //##############################  add ####
 
-void aubio_source_wavread_readframe_mem(aubio_source_wavread_mem_t *s, uint_t *wavread_read);
 
-
-void aubio_source_wavread_readframe_mem(aubio_source_wavread_mem_t *s, uint_t *wavread_read) {
-  unsigned char *short_ptr = s->short_output; 
-  size_t  read ;
-  
-  //AUBIO_ERR("file: %s , func :%s , line:%d , s->pData = %x ,short_ptr = %x ,len = %d \n",__FILE__ , __func__ , __LINE__ , 
-  //                                          s->pData ,      short_ptr , s->blockalign *AUBIO_WAVREAD_BUFSIZE);
-  //size_t read = fread(short_ptr, s->blockalign, AUBIO_WAVREAD_BUFSIZE, s->fid);//del
-  if(s->nLen >= s->blockalign *AUBIO_WAVREAD_BUFSIZE){
-      memcpy(short_ptr ,s->pData , s->blockalign *AUBIO_WAVREAD_BUFSIZE);
-      s->pData = s->pData + s->blockalign *AUBIO_WAVREAD_BUFSIZE;
-      s->nLen = s->nLen - s->blockalign *AUBIO_WAVREAD_BUFSIZE;
-  }
-  
-  //AUBIO_ERR("file: %s , func :%s , line:%d\n",__FILE__ , __func__ , __LINE__);
-  read = s->blockalign *AUBIO_WAVREAD_BUFSIZE ;
-  uint_t i, j, b, bitspersample = s->bitspersample;
-  uint_t wrap_at = (1 << ( bitspersample - 1 ) );
-  uint_t wrap_with = (1 << bitspersample);
-  smpl_t scaler = 1. / wrap_at;
-  int signed_val = 0;
-  unsigned int unsigned_val = 0;
-
-  for (j = 0; j < read; j++) {
-    for (i = 0; i < s->input_channels; i++) {
-      unsigned_val = 0;
-      for (b = 0; b < bitspersample; b+=8 ) {
-        unsigned_val += *(short_ptr) << b;
-        short_ptr++;
-      }
-      signed_val = unsigned_val;
-      // FIXME why does 8 bit conversion maps [0;255] to [-128;127]
-      // instead of [0;127] to [0;127] and [128;255] to [-128;-1]
-      if (bitspersample == 8) signed_val -= wrap_at;
-      else if (unsigned_val >= wrap_at) signed_val = unsigned_val - wrap_with;
-      s->output->data[i][j] = signed_val * scaler;
-    }
-  }
-
-  *wavread_read = read;
-  //AUBIO_ERR("source_wavread: can not read  at samplerate %d with a hop_size of %d\n", s->blockalign, read ); // 4 1024
-
-  if (read == 0) s->eof = 1;
-}
-
-// read_data->length = hop_size(MAIN里面的) , read:读出多少字节的数据，输出
+// read_data->length = hop_size(MAIN里面的) , read:读出多少字节的数据，输出=hod_size
 void aubio_source_wavread_do_mem(aubio_source_wavread_mem_t * s, fvec_t * read_data, uint_t * read){ 
   uint_t i, j;
   uint_t end = 0;
   uint_t total_wrote = 0;
+  
+  //AUBIO_ERR("file: %s , func :%s , line:%d  read_data->length:%d\n",__FILE__ , __func__ , __LINE__,read_data->length);
   uint_t length = aubio_source_validate_input_length_mem("source_wavread",s->hop_size, read_data->length);//PATH  没有用  
 
   while (total_wrote < length) {
@@ -650,6 +659,8 @@ void aubio_source_wavread_do_mem(aubio_source_wavread_mem_t * s, fvec_t * read_d
     total_wrote += end;
     if (total_wrote < length) {
       uint_t wavread_read = 0;
+      
+      //AUBIO_ERR("file: %s , func :%s , line:%d  read_data->length:%d\n",__FILE__ , __func__ , __LINE__,read_data->length);
       aubio_source_wavread_readframe_mem(s, &wavread_read);//wavread_read  numb of read 
       s->read_samples = wavread_read;
       s->read_index = 0;
@@ -661,8 +672,9 @@ void aubio_source_wavread_do_mem(aubio_source_wavread_mem_t * s, fvec_t * read_d
       s->read_index += end;
     }
   }
+  //AUBIO_ERR("file: %s , func :%s , line:%d  read_data->length:%d\n",__FILE__ , __func__ , __LINE__,read_data->length);
 
-  aubio_source_pad_output (read_data, total_wrote);
+  aubio_source_pad_output (read_data, total_wrote);// total_wrote=32
 
   *read = total_wrote;
 }

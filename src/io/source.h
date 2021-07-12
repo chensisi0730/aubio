@@ -92,6 +92,29 @@ struct _aubio_source_t {
 };
 
 
+typedef void (*aubio_source_do_mem_t)(aubio_source_mem_t * s, fvec_t * data, uint_t * read);
+typedef void (*aubio_source_do_multi_mem_t)(aubio_source_mem_t * s, fmat_t * data, uint_t * read);
+typedef uint_t (*aubio_source_get_samplerate_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_get_channels_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_get_duration_mem_t)(aubio_source_mem_t * s);
+typedef uint_t (*aubio_source_seek_mem_t)(aubio_source_mem_t * s, uint_t seek);
+typedef uint_t (*aubio_source_close_mem_t)(aubio_source_mem_t * s);
+typedef void (*del_aubio_source_mem_t)(aubio_source_mem_t * s);
+
+
+
+
+struct _aubio_source_mem_t { 
+  void *source_mem;
+  aubio_source_do_mem_t s_do_mem;
+  aubio_source_do_multi_mem_t s_do_multi_mem;
+  aubio_source_get_samplerate_mem_t s_get_samplerate_mem;
+  aubio_source_get_channels_mem_t s_get_channels_mem;
+  aubio_source_get_duration_mem_t s_get_duration_mem;
+  aubio_source_seek_mem_t s_seek_mem;
+  aubio_source_close_mem_t s_close_mem;
+  del_aubio_source_mem_t s_del_mem;
+};
 
 
 
@@ -111,7 +134,8 @@ struct _aubio_source_t {
 
 */
 aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t hop_size);
-aubio_source_mem_t * new_aubio_source_mem( char_t * pData , const char_t nLen, uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
+aubio_source_mem_t * new_aubio_source_mem( unsigned char   * pData ,  uint_t nLen, uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
+
 
 /**
 

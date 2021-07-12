@@ -192,7 +192,7 @@ aubio_tempo_t * new_aubio_tempo (const char_t * tempo_mode,
 
   /* length of observations, worth about 6 seconds */
   o->winlen = aubio_next_power_of_two(5.8 * samplerate / hop_size);  //ruguo 5.8* ;chensisi  44100  32  return :8192
-  if (o->winlen < 4) o->winlen = 4;
+  if (o->winlen < 4) o->winlen = 4;//8192
   o->step = o->winlen/4;
   o->blockpos = 0;
   o->threshold = 0.3;

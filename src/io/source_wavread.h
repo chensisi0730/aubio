@@ -67,7 +67,7 @@ struct _aubio_source_wavread_t {
   // internal stuff
   FILE *fid;
   uint_t data_size ;
-  uint_t *data_addr;
+  unsigned char *data_addr;
 
   uint_t read_samples;
   uint_t blockalign;
@@ -83,9 +83,38 @@ struct _aubio_source_wavread_t {
   fmat_t *output;
 };
 
+struct _aubio_source_wavread_mem_t {
+  uint_t hop_size;
+  uint_t samplerate;
+  uint_t channels;
+
+  // some data about the file
+  unsigned char  *pData;//±£¥Ê‘Ÿ¥Œ
+  uint_t  nLen;
+  uint_t input_samplerate;
+  uint_t input_channels;
+
+  // internal stuff
+  
+
+  uint_t read_samples;
+  uint_t blockalign;
+  uint_t bitspersample;
+  uint_t read_index;
+  uint_t eof;
+
+  uint_t duration;
+
+  size_t seek_start;
+
+  unsigned char *short_output;//??
+  fmat_t *output;//???
+};
+
 /** wavread media source object */
 typedef struct _aubio_source_wavread_t aubio_source_wavread_t;
 typedef struct _aubio_source_wavread_mem_t aubio_source_wavread_mem_t;
+
 
 /**
 
@@ -103,7 +132,7 @@ typedef struct _aubio_source_wavread_mem_t aubio_source_wavread_mem_t;
 
 */
 aubio_source_wavread_t * new_aubio_source_wavread(const char_t * uri, uint_t samplerate, uint_t hop_size);
-aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( char_t* pData , const char_t nLen, 
+aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( unsigned char* pData ,  uint_t nLen, 
         uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
 
 /**
