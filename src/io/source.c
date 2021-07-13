@@ -39,14 +39,14 @@
 
 
 
-aubio_source_mem_t* new_aubio_source_mem(unsigned char  * pData ,  uint_t  nLen, uint_t samplerate, 
-    uint_t hop_size ,  uint_t BitsPerSample)
+aubio_source_mem_t* new_aubio_source_pcm_mem(unsigned char  * pData ,  uint_t  nLen , uint_t channels , uint_t BitsPerSample, uint_t samplerate, 
+    uint_t hop_size )
 {
   aubio_source_mem_t * s = AUBIO_NEW(aubio_source_mem_t);
   AUBIO_ERROR("file: %s , func :%s , line:%d ,pData = %x ,nLen=%d\n",__FILE__ , __func__ , __LINE__ ,pData, nLen);//9922500 frames, p->data_size=39690000,4倍的关系才是对的
 
 #ifdef HAVE_WAVREAD
-  s->source_mem = (void *)new_aubio_source_wavread_mem( pData , nLen , samplerate, hop_size ,  BitsPerSample);
+  s->source_mem = (void *)new_aubio_source_wavread_mem( pData , nLen , samplerate, hop_size , channels, BitsPerSample);
   if (s->source_mem) {
     s->s_do_mem = (aubio_source_do_mem_t)(aubio_source_wavread_do_mem);
     s->s_do_multi_mem = (aubio_source_do_multi_mem_t)(aubio_source_wavread_do_multi_mem);
@@ -67,7 +67,7 @@ aubio_source_mem_t* new_aubio_source_mem(unsigned char  * pData ,  uint_t  nLen,
   AUBIO_ERROR("source: failed creating with  at %dHz with hop size %d"
      " (no source built-in)\n",  samplerate, hop_size);
 #endif
-  del_aubio_source_mem(s);//chensisi WIN10加上报错
+  del_aubio_source_mem(s);
   return NULL;
 }
 
@@ -137,6 +137,71 @@ uint_t aubio_source_seek (aubio_source_t * s, uint_t seek ) {
 
 
 //#####################add 
+
+aubio_source_wav_mem_t * new_aubio_source_wav_mem( unsigned char  * pData ,  uint_t  nLen , uint_t samplerate, uint_t hop_size) {
+  aubio_source_wav_mem_t * s = AUBIO_NEW(aubio_source_wav_mem_t);
+
+#ifdef HAVE_WAVREAD
+  s->source_wav_mem = (void *)new_aubio_source_wavread_wav_mem(pData, nLen , samplerate, hop_size);
+  if (s->source_wav_mem) {
+    s->s_do_wav_mem = (aubio_source_do_wav_mem_t)(aubio_source_wavread_do_wav_mem);
+    s->s_do_multi_wav_mem = (aubio_source_do_multi_wav_mem_t)(aubio_source_wavread_do_multi_wav_mem);
+    s->s_get_channels_wav_mem = (aubio_source_get_channels_wav_mem_t)(aubio_source_wavread_get_channels_wav_mem);
+    s->s_get_samplerate_wav_mem = (aubio_source_get_samplerate_wav_mem_t)(aubio_source_wavread_get_samplerate_wav_mem);
+    s->s_get_duration_wav_mem = (aubio_source_get_duration_wav_mem_t)(aubio_source_wavread_get_duration_wav_mem);
+    s->s_seek_wav_mem = (aubio_source_seek_wav_mem_t)(aubio_source_wavread_seek_wav_mem);
+    s->s_close_wav_mem = (aubio_source_close_wav_mem_t)(aubio_source_wavread_close_wav_mem);
+    s->s_del_wav_mem = (del_aubio_source_wav_mem_t)(del_aubio_source_wavread_wav_mem);
+    return s;
+  }
+#endif /* HAVE_WAVREAD */
+#if !defined(HAVE_WAVREAD) && \
+  !defined(HAVE_LIBAV) && \
+  !defined(HAVE_SOURCE_APPLE_AUDIO) && \
+  !defined(HAVE_SNDFILE)
+  AUBIO_ERROR("source: failed creating with %s at %dHz with hop size %d"
+     " (no source built-in)\n", uri, samplerate, hop_size);
+#endif
+  del_aubio_source_wav_mem(s);
+  return NULL;
+}
+
+void aubio_source_do_wav_mem(aubio_source_wav_mem_t * s, fvec_t * data, uint_t * read) {
+  s->s_do_wav_mem((void *)s->source_wav_mem, data, read);
+}
+
+void aubio_source_do_multi_wav_mem(aubio_source_wav_mem_t * s, fmat_t * data, uint_t * read) {
+  s->s_do_multi_wav_mem((void *)s->source_wav_mem, data, read);
+}
+
+uint_t aubio_source_close_wav_mem(aubio_source_wav_mem_t * s) {
+  return s->s_close_wav_mem((void *)s->source_wav_mem);
+}
+
+void del_aubio_source_wav_mem(aubio_source_wav_mem_t * s) {
+  //AUBIO_ASSERT(s);
+  if (s && s->s_del_wav_mem && s->source_wav_mem)
+    s->s_del_wav_mem((void *)s->source_wav_mem);
+  AUBIO_FREE(s);
+}
+
+uint_t aubio_source_get_samplerate_wav_mem(aubio_source_wav_mem_t * s) {
+  return s->s_get_samplerate_wav_mem((void *)s->source_wav_mem);
+}
+
+uint_t aubio_source_get_channels_wav_mem(aubio_source_wav_mem_t * s) {
+  return s->s_get_channels_wav_mem((void *)s->source_wav_mem);
+}
+
+uint_t aubio_source_get_duration_wav_mem(aubio_source_wav_mem_t *s) {
+  return s->s_get_duration_wav_mem((void *)s->source_wav_mem);
+}
+
+uint_t aubio_source_seek_wav_mem (aubio_source_wav_mem_t * s, uint_t seek ) {
+  return s->s_seek_wav_mem((void *)s->source_wav_mem, seek);
+}
+
+
 void aubio_source_do_mem(aubio_source_mem_t * s, fvec_t * data, uint_t * read) {
   s->s_do_mem((void *)s->source_mem , data , read );
 }

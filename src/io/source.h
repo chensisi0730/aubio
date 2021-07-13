@@ -69,6 +69,8 @@ extern "C" {
 /** media source object */
 typedef struct _aubio_source_t aubio_source_t;
 typedef struct _aubio_source_mem_t aubio_source_mem_t;
+typedef struct _aubio_source_wav_mem_t aubio_source_wav_mem_t;
+
 
 typedef void (*aubio_source_do_t)(aubio_source_t * s, fvec_t * data, uint_t * read);
 typedef void (*aubio_source_do_multi_t)(aubio_source_t * s, fmat_t * data, uint_t * read);
@@ -117,6 +119,30 @@ struct _aubio_source_mem_t {
 };
 
 
+typedef void (*aubio_source_do_wav_mem_t)(aubio_source_wav_mem_t * s, fvec_t * data, uint_t * read);
+typedef void (*aubio_source_do_multi_wav_mem_t)(aubio_source_wav_mem_t * s, fmat_t * data, uint_t * read);
+typedef uint_t (*aubio_source_get_samplerate_wav_mem_t)(aubio_source_wav_mem_t * s);
+typedef uint_t (*aubio_source_get_channels_wav_mem_t)(aubio_source_wav_mem_t * s);
+typedef uint_t (*aubio_source_get_duration_wav_mem_t)(aubio_source_wav_mem_t * s);
+typedef uint_t (*aubio_source_seek_wav_mem_t)(aubio_source_wav_mem_t * s, uint_t seek);
+typedef uint_t (*aubio_source_close_wav_mem_t)(aubio_source_wav_mem_t * s);
+typedef void (*del_aubio_source_wav_mem_t)(aubio_source_wav_mem_t * s);
+
+
+
+
+struct _aubio_source_wav_mem_t { 
+  void *source_wav_mem;
+  aubio_source_do_wav_mem_t s_do_wav_mem;
+  aubio_source_do_multi_wav_mem_t s_do_multi_wav_mem;
+  aubio_source_get_samplerate_wav_mem_t s_get_samplerate_wav_mem;
+  aubio_source_get_channels_wav_mem_t s_get_channels_wav_mem;
+  aubio_source_get_duration_wav_mem_t s_get_duration_wav_mem;
+  aubio_source_seek_wav_mem_t s_seek_wav_mem;
+  aubio_source_close_wav_mem_t s_close_wav_mem;
+  del_aubio_source_wav_mem_t s_del_wav_mem;
+};
+
 
 /**
 
@@ -134,7 +160,8 @@ struct _aubio_source_mem_t {
 
 */
 aubio_source_t * new_aubio_source(const char_t * uri, uint_t samplerate, uint_t hop_size);
-aubio_source_mem_t * new_aubio_source_mem( unsigned char   * pData ,  uint_t nLen, uint_t samplerate, uint_t hop_size ,  uint_t BitsPerSample);
+aubio_source_mem_t * new_aubio_source_pcm_mem( unsigned char   * pData ,  uint_t nLen, uint_t channels , uint_t BitsPerSample, uint_t samplerate, uint_t hop_size );
+aubio_source_wav_mem_t * new_aubio_source_wav_mem( unsigned char * pData ,uint_t nLen, uint_t samplerate, uint_t hop_size );
 
 
 /**
@@ -151,6 +178,7 @@ aubio_source_mem_t * new_aubio_source_mem( unsigned char   * pData ,  uint_t nLe
 */
 void aubio_source_do(aubio_source_t * s, fvec_t * read_to, uint_t * read);
 void aubio_source_do_mem(aubio_source_mem_t * s, fvec_t * read_to, uint_t * read);
+void aubio_source_do_wav_mem(aubio_source_wav_mem_t * s, fvec_t * read_to, uint_t * read);
 
 /**
 
@@ -166,6 +194,7 @@ void aubio_source_do_mem(aubio_source_mem_t * s, fvec_t * read_to, uint_t * read
 */
 void aubio_source_do_multi(aubio_source_t * s, fmat_t * read_to, uint_t * read);
 void aubio_source_do_multi_mem(aubio_source_mem_t * s, fmat_t * read_to, uint_t * read);
+void aubio_source_do_multi_wav_mem(aubio_source_wav_mem_t * s, fmat_t * read_to, uint_t * read);
 
 /**
 
@@ -177,6 +206,7 @@ void aubio_source_do_multi_mem(aubio_source_mem_t * s, fmat_t * read_to, uint_t 
 */
 uint_t aubio_source_get_samplerate(aubio_source_t * s);
 uint_t aubio_source_get_samplerate_mem(aubio_source_mem_t * s);
+uint_t aubio_source_get_samplerate_wav_mem(aubio_source_wav_mem_t * s);
 
 /**
 
@@ -188,6 +218,7 @@ uint_t aubio_source_get_samplerate_mem(aubio_source_mem_t * s);
 */
 uint_t aubio_source_get_channels (aubio_source_t * s);
 uint_t aubio_source_get_channels_mem (aubio_source_mem_t * s);
+uint_t aubio_source_get_channels_wav_mem (aubio_source_wav_mem_t * s);
 
 /**
 
@@ -201,6 +232,7 @@ uint_t aubio_source_get_channels_mem (aubio_source_mem_t * s);
 */
 uint_t aubio_source_seek (aubio_source_t * s, uint_t pos);
 uint_t aubio_source_seek_mem (aubio_source_mem_t * s, uint_t pos);
+uint_t aubio_source_seek_wav_mem (aubio_source_wav_mem_t * s, uint_t pos);
 
 /**
 
@@ -212,6 +244,7 @@ uint_t aubio_source_seek_mem (aubio_source_mem_t * s, uint_t pos);
 */
 uint_t aubio_source_get_duration (aubio_source_t * s);
 uint_t aubio_source_get_duration_mem (aubio_source_mem_t * s);
+uint_t aubio_source_get_duration_wav_mem (aubio_source_wav_mem_t * s);
 
 /**
 
@@ -224,6 +257,7 @@ uint_t aubio_source_get_duration_mem (aubio_source_mem_t * s);
  */
 uint_t aubio_source_close (aubio_source_t *s);
 uint_t aubio_source_close_mem (aubio_source_mem_t *s);
+uint_t aubio_source_close_wav_mem (aubio_source_wav_mem_t *s);
 
 /**
 
@@ -234,6 +268,7 @@ uint_t aubio_source_close_mem (aubio_source_mem_t *s);
 */
 void del_aubio_source(aubio_source_t * s);
 void del_aubio_source_mem(aubio_source_mem_t * s);
+void del_aubio_source_wav_mem(aubio_source_wav_mem_t * s);
 
 #ifdef __cplusplus
 }

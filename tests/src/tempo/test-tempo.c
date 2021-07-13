@@ -66,32 +66,97 @@ int main (int argc, char **argv)
       n_frames, samplerate,
       n_frames / hop_size, source_path);
 
+  beach_tempo:
+    del_fvec(in);
+    del_fvec(out);
+    del_aubio_source(source);
+  beach:
+    aubio_cleanup();
+
+
   // clean up memory
   del_aubio_tempo(o);
-#else
+//////////////  WAV mem  接口 ///////////
+#elif WAV_MEM_INTERFACE 
+{
+	FILE* fp = NULL;
+    uint_t nFileLen =0;
+    source_path = "bounce.mp3.wav";
+    fp = fopen(source_path ,"rb");
+    if (fp == NULL)
+    {       
+        return 0;   
+    }  
+    fseek(fp,0,SEEK_END); //定位到文件末    
+    if ((nFileLen = ftell(fp))<1)//文件长度 
+    {      
+        fclose(fp);    
+        return 0;   
+    }       
+    unsigned char  * data = (unsigned char  *)malloc(sizeof(char)*(nFileLen+1)); 
+    if (NULL == data)   
+    {       
+
+        fclose(fp);     
+        return 0;   
+    }   
+    fseek(fp,0,SEEK_SET);
+    fread(data, nFileLen, 1, fp);
+
+    aubio_source_wav_mem_t* source = new_aubio_source_wav_mem(data , nFileLen , samplerate, hop_size);
+    if (!source) { err = 1; goto beach; }
+
+    if (samplerate == 0 ) samplerate = aubio_source_get_samplerate_wav_mem(source);
+
+    // create some vectors
+    fvec_t * in = new_fvec (hop_size); // input audio buffer  一次处理一个hop_size的数据
+    fvec_t * out = new_fvec (1); // output position
+
+    // create tempo object
+    aubio_tempo_t * o = new_aubio_tempo("default", win_size, hop_size, samplerate);
+
+    if (!o) { err = 1; goto beach_tempo; }
+
+    do {
+      // put some fresh data in input vector
+      aubio_source_do_wav_mem(source, in, &read); //read = 256 = hop_size 一次从文件句柄中取出一个hop_size数据
+      // execute tempo
+      aubio_tempo_do(o,in,out);
+      // do something with the beats
+      if (out->data[0] != 0) {
+        PRINT_MSG("beat at  %.3fs, %.2f bpm "
+            "with confidence %.2f\n",
+            aubio_tempo_get_last_s(o),            
+            aubio_tempo_get_confidence(o));
+      }
+      n_frames += read;
+    } while ( read == hop_size );
+
+    PRINT_MSG("read %.2fs, %d frames at %dHz (%d blocks) from %s\n",
+        n_frames * 1. / samplerate,
+        n_frames, samplerate,
+        n_frames / hop_size, source_path);
+
+    // clean up memory
+    del_aubio_tempo(o);
+    
+    beach_tempo:
+      del_fvec(in);
+      del_fvec(out);
+      del_aubio_source(source);
+    beach:
+      aubio_cleanup();
+
+      return err;
+
+}
+#elif PCM_MEM_INTERFACE
 
 
-//////////////  mem  接口 ///////////
-
+//////////////  PCM mem  接口 ///////////
 { 
     n_frames = 0 ;
     read = 0;
-
-    #if ZIJIZAO_MEM //mem  自己构造的数据，无法获得节拍，
-    int DATA_LEN = 44100*2*2 ;//44100*2*2 ; //32*2*2 ;
-    unsigned char  * p = (unsigned char *)malloc(DATA_LEN);// 单通道  16BIT
-    memset(p ,0x55, DATA_LEN );
-    if(p == NULL){
-        PRINT_MSG("file: %s , func :%s , line:%d , *p = 0x%x\n",__FILE__ , __func__ , __LINE__, *p);
-        return ;
-    }
-    
-    PRINT_MSG("file: %s , func :%s , line:%d , *p = 0x%x\n",__FILE__ , __func__ , __LINE__, *p);
-    samplerate = 44100 ;
-    aubio_source_t * source_mem = new_aubio_source_mem(p , DATA_LEN, samplerate, hop_size , 16);
-    #else
-
-    
     char_t *source_path = "bounce.mp3.wav";
     samplerate = 44100 ;
     aubio_source_wavread_t * p ;
@@ -104,10 +169,7 @@ int main (int argc, char **argv)
     
     PRINT_MSG("file: %s , func :%s , line:%d ,p->data_addr = %x ,p->data_size=%d\n",__FILE__ , __func__ , __LINE__ ,
         p->data_addr, p->data_size);//9922500 frames, p->data_size=39690000,4倍的关系才是对的
-    aubio_source_t * source_mem = new_aubio_source_mem(p->data_addr, p->data_size, samplerate,   hop_size ,16);
-    #endif
-
-
+    aubio_source_t * source_mem = new_aubio_source_pcm_mem(p->data_addr, p->data_size, 2 , 16 , samplerate,   hop_size );
 
     if (!source_mem) { err = 1; goto beach; }
 
@@ -148,13 +210,10 @@ int main (int argc, char **argv)
         n_frames, samplerate,
         n_frames / hop_size);
 
-#if ZIJIZAO_MEM
-free(p);
 
-#else
 free(p->data_addr);
 
-#endif
+
    
 
     beach_tempo_mem:
@@ -162,14 +221,8 @@ free(p->data_addr);
       del_fvec(in_mem);
       del_fvec(out_mem);
       del_aubio_source(source_mem);
-#ifdef ZIJIZAO_MEM
-      free(p);
-      
-#else
-      free(p->data_addr);
-      
-#endif
 
+      free(p->data_addr);
 
     // clean up memory
     del_aubio_tempo(o);
@@ -179,14 +232,7 @@ free(p->data_addr);
 }
 #endif 
 
-#if FILE_INTERFACE
-beach_tempo:
-  del_fvec(in);
-  del_fvec(out);
-  del_aubio_source(source);
-beach:
-  aubio_cleanup();
-#endif
+
   return err;
 }
 #pragma GCC pop_options //防止GDB时，被优化
