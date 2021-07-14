@@ -58,6 +58,137 @@ struct _aubio_tempo_t {
 #pragma GCC push_options
 #pragma GCC optimize (0)
 
+void  aubio_source_compact_wav_mem_do(aubio_source_wav_mem_t* source, aubio_tempo_t * o , uint_t hop_size, aubio_result_t * res )
+{
+    uint_t n_frames = 0, read = 0, beat_num = 4096 , count =0;
+    uint_t malloc_beishu =1;
+    // create some vectors
+    fvec_t * in = new_fvec (hop_size); // input audio buffer  一次处理一个hop_size的数据
+    fvec_t * out = new_fvec (1); // output position
+    smpl_t *  pConfidence_temp =0 ;
+    smpl_t *  pPosition_temp =0;
+
+    res->pConfidence = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+    res->pPosition   = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+
+    do {
+        // put some fresh data in input vector
+        aubio_source_do_wav_mem(source, in, &read); //read = 256 = hop_size 一次从文件句柄中取出一个hop_size数据
+        // execute tempo
+        aubio_tempo_do(o,in,out);
+        // do something with the beats
+        if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
+            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
+            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            count+=1;
+            if( count > beat_num*malloc_beishu){
+                    AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
+                    pConfidence_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * ++malloc_beishu);
+                    pPosition_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * malloc_beishu);
+                    memset(pConfidence_temp , res->pConfidence , beat_num * (malloc_beishu-1));
+                    memset(pPosition_temp , res->pPosition , beat_num * (malloc_beishu-1));
+            }
+        }
+        n_frames += read;
+    } while ( read == hop_size );
+    res->length = count ;
+
+    n_frames = 0; read = 0 ,count =0;
+    AUBIO_MSG("read %d blocks) \n",        n_frames / hop_size);
+    del_fvec(in);
+    del_fvec(out);
+
+//    return res;
+}
+
+
+void  aubio_source_compact_pcm_mem_do(aubio_source_mem_t* source, aubio_tempo_t * o , uint_t hop_size ,aubio_result_t * res)
+{
+    uint_t n_frames = 0, read = 0, beat_num = 4096 , count =0;
+    uint_t malloc_beishu =1;
+    // create some vectors
+    fvec_t * in = new_fvec (hop_size); // input audio buffer  一次处理一个hop_size的数据
+    fvec_t * out = new_fvec (1); // output position
+    smpl_t *  pConfidence_temp =0 ;
+    smpl_t *  pPosition_temp =0;
+
+    res->pConfidence = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+    res->pPosition   = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+
+    do {
+        // put some fresh data in input vector
+        aubio_source_do_mem(source, in, &read); //read = 256 = hop_size 一次从文件句柄中取出一个hop_size数据
+        // execute tempo
+        aubio_tempo_do(o,in,out);
+        // do something with the beats
+        if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
+            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
+            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            count+=1;
+            if( count > beat_num*malloc_beishu){
+                    AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
+                    pConfidence_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * ++malloc_beishu);
+                    pPosition_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * malloc_beishu);
+                    memset(pConfidence_temp , res->pConfidence , beat_num * (malloc_beishu-1));
+                    memset(pPosition_temp , res->pPosition , beat_num * (malloc_beishu-1));
+            }
+        }
+        n_frames += read;
+    } while ( read == hop_size );
+    res->length = count ;
+
+    n_frames = 0; read = 0 ,count =0;
+    AUBIO_MSG("read %d blocks) \n",        n_frames / hop_size);
+    del_fvec(in);
+    del_fvec(out);
+
+//    return res;
+}
+
+
+void  aubio_source_compact_do(aubio_source_t* source, aubio_tempo_t * o , uint_t hop_size  ,aubio_result_t * res)
+{
+    uint_t n_frames = 0, read = 0, beat_num = 4096 , count =0;
+    uint_t malloc_beishu =1;
+    // create some vectors
+    fvec_t * in = new_fvec (hop_size); // input audio buffer  一次处理一个hop_size的数据
+    fvec_t * out = new_fvec (1); // output position
+    smpl_t *  pConfidence_temp =0 ;
+    smpl_t *  pPosition_temp =0;
+
+    res->pConfidence = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+    res->pPosition   = (smpl_t *)malloc(sizeof(smpl_t) * beat_num*malloc_beishu);
+
+    do {
+        // put some fresh data in input vector
+        aubio_source_do(source, in, &read); //read = 256 = hop_size 一次从文件句柄中取出一个hop_size数据
+        // execute tempo
+        aubio_tempo_do(o,in,out);
+        // do something with the beats
+        if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
+            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
+            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            count+=1;
+            if( count > beat_num*malloc_beishu){
+                    AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
+                    pConfidence_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * ++malloc_beishu);
+                    pPosition_temp = (smpl_t *)malloc(sizeof(smpl_t) * beat_num * malloc_beishu);
+                    memset(pConfidence_temp , res->pConfidence , beat_num * (malloc_beishu-1));
+                    memset(pPosition_temp , res->pPosition , beat_num * (malloc_beishu-1));
+            }
+        }
+        n_frames += read;
+    } while ( read == hop_size );
+    res->length = count ;
+
+    n_frames = 0; read = 0 ,count =0;
+    AUBIO_MSG("read %d blocks) \n",        n_frames / hop_size);
+    del_fvec(in);
+    del_fvec(out);
+
+//    return res;
+}
+
 /* execute tempo detection function on iput buffer */
 void aubio_tempo_do(aubio_tempo_t *o, const fvec_t * input, fvec_t * tempo)
 {

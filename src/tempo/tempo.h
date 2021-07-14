@@ -36,9 +36,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "io/source.h"
 /** tempo detection structure */
 typedef struct _aubio_tempo_t aubio_tempo_t;
+typedef struct _aubio_result_t aubio_result_t;
+struct _aubio_result_t
+{
+    smpl_t* pPosition;              // position array
+    smpl_t* pConfidence;            // confidence array
+    uint_t length;                  // array length
+};
 
 /** create tempo detection object
 
@@ -52,6 +59,11 @@ typedef struct _aubio_tempo_t aubio_tempo_t;
 */
 aubio_tempo_t * new_aubio_tempo (const char_t * method,
     uint_t buf_size, uint_t hop_size, uint_t samplerate);
+
+void  aubio_source_compact_wav_mem_do(aubio_source_wav_mem_t* source, aubio_tempo_t * o , uint_t hop_size, aubio_result_t * res );
+void  aubio_source_compact_pcm_mem_do(aubio_source_mem_t* source, aubio_tempo_t * o , uint_t hop_size ,aubio_result_t * res);
+void  aubio_source_compact_do(aubio_source_t* source, aubio_tempo_t * o , uint_t hop_size  , aubio_result_t * res);
+
 
 /** execute tempo detection
 

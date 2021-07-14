@@ -65,7 +65,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "fmat.h"
 /** media source object */
 typedef struct _aubio_source_t aubio_source_t;
 typedef struct _aubio_source_mem_t aubio_source_mem_t;
