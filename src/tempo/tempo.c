@@ -78,8 +78,11 @@ void  aubio_source_compact_wav_mem_do(aubio_source_wav_mem_t* source, aubio_temp
         aubio_tempo_do(o,in,out);
         // do something with the beats
         if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
-            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
-            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            
+            AUBIO_MSG("beat at  %.3fs,"
+                        "with confidence %.2f\n",
+                        *(res->pPosition + count) = aubio_tempo_get_last_s(o),
+                        *(res->pConfidence + count) = aubio_tempo_get_confidence(o));
             count+=1;
             if( count > beat_num*malloc_beishu){
                     AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
@@ -166,8 +169,11 @@ void  aubio_source_compact_do(aubio_source_t* source, aubio_tempo_t * o , uint_t
         aubio_tempo_do(o,in,out);
         // do something with the beats
         if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
-            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
-            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            AUBIO_MSG("beat at  %.3fs,"
+                        "with confidence %.2f\n",
+                        *(res->pPosition + count) = aubio_tempo_get_last_s(o),
+                        *(res->pConfidence + count) = aubio_tempo_get_confidence(o));
+
             count+=1;
             if( count > beat_num*malloc_beishu){
                     AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
@@ -299,6 +305,8 @@ smpl_t aubio_tempo_get_threshold(aubio_tempo_t * o) {
   return o->threshold;
 }
 
+
+
 /* Allocate memory for an tempo detection */
 aubio_tempo_t * new_aubio_tempo (const char_t * tempo_mode,
     uint_t buf_size, uint_t hop_size, uint_t samplerate)
@@ -321,8 +329,9 @@ aubio_tempo_t * new_aubio_tempo (const char_t * tempo_mode,
     goto beach;
   }
 
-  /* length of observations, worth about 6 seconds */
-  o->winlen = aubio_next_power_of_two(5.8 * samplerate / hop_size);  //ruguo 5.8* ;chensisi  44100  32  return :8192
+  /* length of observations, worth about 6 seconds ，改30，9.8，1都不行*/
+  o->winlen = aubio_next_power_of_two(5.8 * samplerate / hop_size);  //ruguo 5.8* ; TODO :chensisi   44100  32  return :8192
+  AUBIO_MSG("tempo: o->winle (%d) can not be \n", o->winlen);
   if (o->winlen < 4) o->winlen = 4;//8192
   o->step = o->winlen/4;
   o->blockpos = 0;

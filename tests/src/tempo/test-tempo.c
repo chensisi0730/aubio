@@ -1,6 +1,6 @@
 #include <aubio.h>
 #include "utils_tests.h"
-#define FILE_INTERFACE 0
+#define FILE_INTERFACE 1
 #define WAV_MEM_INTERFACE 1
 #define PCM_MEM_INTERFACE 1
 
@@ -23,13 +23,13 @@ int main (int argc, char **argv)
   if ( argc >= 3 ) samplerate = atoi(argv[2]);
   uint_t win_size = 1024; // window size
   if ( argc >= 4 ) win_size = atoi(argv[3]);
-  uint_t hop_size = win_size / 8;  //32:hop_size =32  4:hop_size =256
+  uint_t hop_size = win_size / 32;  //32:hop_size =32  4:hop_size =256
   if ( argc >= 5 ) hop_size = atoi(argv[4]);
   uint_t n_frames = 0, read = 0;
 
   char_t *source_path = argv[1];
   //source_path = "44100Hz_44100f_sine441_stereo.wav";
-  source_path =   "bounce.mp3.wav";
+  //source_path =   "bounce.mp3.wav";
 #if FILE_INTERFACE
   aubio_source_t * source = new_aubio_source(source_path, samplerate, hop_size);
   if (!source) { err = 1; goto beach; }
@@ -60,7 +60,7 @@ int main (int argc, char **argv)
     
     aubio_result_t rest ;
     uint_t nFileLen =0;
-    source_path = "bounce.mp3.wav";
+    //source_path = "bounce.mp3.wav";
     fp = fopen(source_path ,"rb");
     if (fp == NULL)
     {       

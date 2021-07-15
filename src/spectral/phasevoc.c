@@ -77,9 +77,9 @@ void aubio_pvoc_rdo(aubio_pvoc_t *pv,cvec_t * fftgrain, fvec_t * synthnew) {
 aubio_pvoc_t * new_aubio_pvoc (uint_t win_s, uint_t hop_s) {
   aubio_pvoc_t * pv = AUBIO_NEW(aubio_pvoc_t);
 
-  /* if (win_s < 2*hop_s) {
+  /* */if (win_s < 7*hop_s) {
     AUBIO_WRN("Hop size bigger than half the window size!\n");
-  } */ //TODO:chensisi 需要验证
+  }  //TODO:chensisi 需要验证-YES
 
   if ((sint_t)hop_s < 1) {
     AUBIO_ERR("pvoc: got hop_size %d, but can not be < 1\n", hop_s);

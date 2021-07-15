@@ -74,10 +74,10 @@ uint_t aubio_source_validate_input_length_mem(const char_t *kind,
 {
   uint_t length = hop_size;
   if (hop_size < read_data_length) {
-    AUBIO_ERR("%s: partial read from xx, trying to read %d frames, but"
+    AUBIO_WRN("%s: partial read from xx, trying to read %d frames, but"
         " hop_size is %d\n", kind, read_data_length, hop_size);
   } else if (hop_size > read_data_length) {
-    AUBIO_ERR("%s: partial read from xx, trying to read %d frames into"
+    AUBIO_WRN("%s: partial read from xx, trying to read %d frames into"
         " a buffer of length %d\n", kind, hop_size, read_data_length);
     length = read_data_length;
   }
