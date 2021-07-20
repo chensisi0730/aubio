@@ -59,8 +59,12 @@ struct _aubio_result_t
 */
 aubio_tempo_t * new_aubio_tempo (const char_t * method,
     uint_t buf_size, uint_t hop_size, uint_t samplerate);
+int aubio_beat_compact_wav_mem_do(unsigned char  * pData ,  uint_t  nLen , uint_t samplerate, uint_t win_size , uint_t hop_size ,aubio_result_t * res);
 
 void  aubio_source_compact_wav_mem_do(aubio_source_wav_mem_t* source, aubio_tempo_t * o , uint_t hop_size, aubio_result_t * res );
+void aubio_beat_compact_pcm_mem_do(unsigned char  * pData ,  uint_t  nLen , uint_t channels , uint_t BitsPerSample, uint_t samplerate, 
+                uint_t win_size , uint_t hop_size ,aubio_result_t * res);
+
 void  aubio_source_compact_pcm_mem_do(aubio_source_mem_t* source, aubio_tempo_t * o , uint_t hop_size ,aubio_result_t * res);
 void  aubio_source_compact_do(aubio_source_t* source, aubio_tempo_t * o , uint_t hop_size  , aubio_result_t * res);
 

@@ -60,7 +60,7 @@ int main (int argc, char **argv)
     
     aubio_result_t rest ;
     uint_t nFileLen =0;
-    //source_path = "bounce.mp3.wav";
+    source_path = "bounce.mp3.wav";
     fp = fopen(source_path ,"rb");
     if (fp == NULL)
     {       
@@ -81,30 +81,14 @@ int main (int argc, char **argv)
     }   
     fseek(fp,0,SEEK_SET);
     fread(data, nFileLen, 1, fp);
+    fclose(fp);
 
-    aubio_source_wav_mem_t* source = new_aubio_source_wav_mem(data , nFileLen , samplerate, hop_size);
-    if (!source) { err = 1; goto beach; }
 
-    if (samplerate == 0 ) samplerate = aubio_source_get_samplerate_wav_mem(source);
-
-    // create tempo object
-    aubio_tempo_t * o = new_aubio_tempo("default", win_size, hop_size, samplerate);
-
-    if (!o) { err = 1; goto beach_tempo; }
-    
-    aubio_source_compact_wav_mem_do(source , o , hop_size , &rest);    
+    aubio_beat_compact_wav_mem_do(data , nFileLen , samplerate, win_size , hop_size , &rest);
+    free(data);
     free(rest.pConfidence);
     free(rest.pPosition);
 
-    // clean up memory
-    del_aubio_tempo(o);
-    
-    beach_tempo:
-      del_aubio_source((aubio_source_t *)source);
-    beach:
-      aubio_cleanup();
-
-      return err;
 
 }
 #elif PCM_MEM_INTERFACE
@@ -112,47 +96,40 @@ int main (int argc, char **argv)
 
 //////////////  PCM mem  接口 ///////////
 { 
-    n_frames = 0 ;
-    read = 0;
-    char_t *source_path = "bounce.mp3.wav";
-    samplerate = 44100 ;
-    aubio_source_wavread_t * p ;
-    aubio_source_t * source_my = new_aubio_source(source_path, samplerate,  hop_size);
-    p = (aubio_source_wavread_t *)(source_my->source);
-    if( p->data_addr == NULL){       
-        PRINT_MSG("file: %s , func :%s , line:%d\n",__FILE__ , __func__ , __LINE__);
-        return ;
-    }
+	FILE* fp = NULL;
     
-    PRINT_MSG("file: %s , func :%s , line:%d ,p->data_addr = %x ,p->data_size=%d\n",__FILE__ , __func__ , __LINE__ ,
-        p->data_addr, p->data_size);//9922500 frames, p->data_size=39690000,4倍的关系才是对的
-    aubio_source_t * source_mem = new_aubio_source_pcm_mem(p->data_addr, p->data_size, 2 , 16 , samplerate,   hop_size );
+    aubio_result_t rest ;
+    uint_t nFileLen =0;
+    source_path = "bounce.pcm";
+    fp = fopen(source_path ,"rb");
+    if (fp == NULL)
+    {       
+        return 0;   
+    }  
+    fseek(fp,0,SEEK_END); //定位到文件末    
+    if ((nFileLen = ftell(fp))<1)//文件长度 
+    {      
+        fclose(fp);    
+        return 0;   
+    }       
+    unsigned char  * data = (unsigned char  *)malloc(sizeof(char)*(nFileLen+1)); 
+    if (NULL == data)   
+    {       
 
-    if (!source_mem) { err = 1; goto beach; }
-    if (samplerate == 0 ) samplerate = aubio_source_get_samplerate_mem(source_mem);
+        fclose(fp);     
+        return 0;   
+    }   
+    fseek(fp,0,SEEK_SET);
+    fread(data, nFileLen, 1, fp);
+    fclose(fp);
 
-    // create tempo object
-    aubio_tempo_t * o = new_aubio_tempo("default", win_size, hop_size, samplerate);
 
-    if (!o) { err = 1; goto beach_tempo_mem; }
-    //PRINT_MSG("file: %s , func :%s , line:%d  hop_size :%d\n",__FILE__ , __func__ , __LINE__ ,hop_size);
+    samplerate = 44100 ;
+    aubio_beat_compact_pcm_mem_do(data , nFileLen, 2 , 16 , samplerate,   win_size , hop_size , &rest);
 
-    aubio_source_compact_pcm_mem_do(source_mem , o , hop_size , &rest);
-    free(p->data_addr);
+    free(data);
     free(rest.pConfidence);
     free(rest.pPosition);
-
-   
-
-    beach_tempo_mem:
-    PRINT_ERR("read !!!!!!!!!!!!!!!\n");
-      del_aubio_source(source_mem);
-      free(p->data_addr);
-
-    // clean up memory
-    del_aubio_tempo(o);
-    beach:
-      aubio_cleanup();
 
 }
 #endif 

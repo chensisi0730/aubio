@@ -362,8 +362,17 @@ aubio_source_wavread_t * new_aubio_source_wavread(const char_t * path, uint_t sa
   s->data_addr = (unsigned char*)AUBIO_MALLOC(data_size);
   tem_len = fread(s->data_addr, 1, data_size, s->fid) ;//把数据和大小都读出来
   fseek(s->fid , -data_size, SEEK_CUR );//SEEK_CUR:1 文件指针还需要移动到原来的位置
+
+  /*
+  FILE *fp_temp = fopen("source.pcm" , "rb+");//save as pcm file chensisi TODO:
+  if(data_size == fwrite( s->data_addr ,1 , data_size ,  fp_temp))
+    {
+        fclose(fp_temp);
+  }
+  else    
+  AUBIO_ERR("source_wavread: source.pcm \n");
+  */
   
-  //fopen();//save as pcm file chensisi TODO:
   // check the total number of bytes read is correct
   if ( bytes_read != bytes_expected ) {
 #ifndef HAVE_WIN_HACKS

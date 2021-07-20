@@ -136,8 +136,8 @@ void
 aubio_source_pad_output (fvec_t *read_data, uint_t source_read)
 {
   if (source_read < read_data->length) {
-      AUBIO_ERR("file: %s , func :%s , line:%d  \n",__FILE__ , __func__ , __LINE__);
-    AUBIO_MEMSET(read_data->data + source_read, 0,
+      AUBIO_DBG("file: %s , func :%s , line:%d  \n",__FILE__ , __func__ , __LINE__);
+    AUBIO_MEMSET(read_data->data + source_read, 0 ,
         (read_data->length - source_read) * sizeof(smpl_t));
   }
 }

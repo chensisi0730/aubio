@@ -104,6 +104,66 @@ void  aubio_source_compact_wav_mem_do(aubio_source_wav_mem_t* source, aubio_temp
 //    return res;
 }
 
+void aubio_beat_compact_pcm_mem_do(unsigned char  * pData ,  uint_t  nLen , uint_t channels , uint_t BitsPerSample, uint_t samplerate, 
+                uint_t win_size , uint_t hop_size ,aubio_result_t * res)
+{
+    //uint_t samplerate_getin = 0;
+    int err = 0;
+    aubio_result_t rest ;
+    aubio_source_t * source_mem = new_aubio_source_pcm_mem(pData , nLen , channels , BitsPerSample , samplerate  ,  hop_size );
+    
+    if (!source_mem) { err = 1; goto beach; }
+    if (samplerate == 0 ) samplerate = aubio_source_get_samplerate_mem(source_mem);
+    
+    // create tempo object
+    aubio_tempo_t * o = new_aubio_tempo("default", win_size, hop_size, samplerate);
+    
+    if (!o) { err = 1; goto beach_tempo_mem; }
+    //PRINT_MSG("file: %s , func :%s , line:%d  hop_size :%d\n",__FILE__ , __func__ , __LINE__ ,hop_size);
+    
+    aubio_source_compact_pcm_mem_do(source_mem , o , hop_size , &rest);
+    res->length = rest.length ;
+    res->pConfidence= rest.pConfidence ;
+    res->pPosition= rest.pPosition ;
+    
+    beach_tempo_mem:
+        del_aubio_source(source_mem);
+        // clean up memory
+        del_aubio_tempo(o);
+    beach:
+        aubio_cleanup();
+
+}
+
+int aubio_beat_compact_wav_mem_do(unsigned char  * pData ,  uint_t  nLen , uint_t samplerate, uint_t win_size , uint_t hop_size ,aubio_result_t * res){
+    int err = 0 ;        
+    aubio_result_t rest ;
+    aubio_source_wav_mem_t* source = new_aubio_source_wav_mem(pData , nLen , samplerate, hop_size);
+    if (!source) { err = 1; goto beach; }
+    
+    if (samplerate == 0 ) samplerate = aubio_source_get_samplerate_wav_mem(source);
+    
+    // create tempo object
+    aubio_tempo_t * o = new_aubio_tempo("default", win_size, hop_size, samplerate);
+    if (!o) { err = 1; goto beach_tempo; }
+    
+    aubio_source_compact_wav_mem_do(source , o , hop_size , &rest);    
+    res->length = rest.length ;
+    res->pConfidence= rest.pConfidence ;
+    res->pPosition= rest.pPosition ;
+    
+    // clean up memory
+    del_aubio_tempo(o);
+    return err;
+    beach_tempo:
+      del_aubio_source((aubio_source_t *)source);
+    beach:
+      aubio_cleanup();
+      return err;
+
+}
+
+
 
 void  aubio_source_compact_pcm_mem_do(aubio_source_mem_t* source, aubio_tempo_t * o , uint_t hop_size ,aubio_result_t * res)
 {
@@ -125,8 +185,10 @@ void  aubio_source_compact_pcm_mem_do(aubio_source_mem_t* source, aubio_tempo_t 
         aubio_tempo_do(o,in,out);
         // do something with the beats
         if (out->data[0] != 0) {//自己造的数据，是不会有节拍的
-            *(res->pPosition + count) = aubio_tempo_get_last_s(o);     
-            *(res->pConfidence + count) = aubio_tempo_get_confidence(o);
+            AUBIO_MSG("beat at  %.3fs,"
+                        "with confidence %.2f\n",
+                        *(res->pPosition + count) = aubio_tempo_get_last_s(o),
+                        *(res->pConfidence + count) = aubio_tempo_get_confidence(o));
             count+=1;
             if( count > beat_num*malloc_beishu){
                     AUBIO_MSG("this song 's time is too long , please connect  the engineer!!!  \n) \n");
