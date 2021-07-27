@@ -88,7 +88,7 @@ aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( unsigned char* pData 
   size_t bytes_read = 0, bytes_junk = 0, bytes_expected = 44;
   unsigned char buf[5] = "\0";
   unsigned int format,  sr, byterate, blockalign, duration, bitspersample = 0;//, data_size;
-     BitsPerSample=16;
+
   if ((sint_t)samplerate <= 0) {
     AUBIO_ERR("source_wavread: Can not open  with samplerate %d\n", samplerate);
     goto beach;
@@ -98,15 +98,15 @@ aubio_source_wavread_mem_t * new_aubio_source_wavread_mem( unsigned char* pData 
     goto beach;
   }
   
-  #if 1
+  #if 0
   if ( BitsPerSample != 16 ) {
-    AUBIO_ERR("source_wavread: can not process %dbit \n",
+    AUBIO_ERR("source_wavread: can not process %d bit \n",
         bitspersample);
   }
   #endif
 
-  channels = 2;
-  bitspersample = 16;
+  
+  bitspersample = BitsPerSample;
   s->samplerate = samplerate;
   s->hop_size = hop_size;
   s->input_samplerate = samplerate;
